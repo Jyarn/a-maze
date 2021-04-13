@@ -3,26 +3,62 @@ import random
 import time
 import sys
 
-class mzElm():
+class mzElm(): # maze table element
     up = False # up
     dwn = False # down
     rt = False # right
     lt = False # left
 
-mzSize = [0, 0]
-mzSize[0] = 100
-mzSize[1] = 100
+def end(): # cleanup
+    print("done")
 
-monRes = [1920, 1080]
-border = [0, 0]
-size = [monRes[0]-border[0], monRes[1]-border[1]]
+
+# wall to path ratio
+wallSize = 1; 
+pathSize = 5;
+
+pattern = [0]*wallSize + [1]*pathSize;
+
+# colours[0] = wall colour
+# colours[1] = path colour
+# colours[2] = background colour
+colours = [ [64, 0, 0], [0, 0, 0], [0, 0, 0] ]
+
+
+monRes = [1920, 1080] # monitor res
+border = [0, 0] # border size 0 = fullscreen
+size = [monRes[0]-border[0], monRes[1]-border[1]] # window size based on monRes and border size
 
 
 pyg.init()
-scrn = pyg.display.set_mode(size)
-clr = [0, 0, 0]
+screen = pyg.display.set_mode(size)
 
-scrn.fill([0, 0, 0])
+screen.fill(colours[2])
 
-for i in range(size[0]*size[1]):
+
+for x in range(size[0]):
+    pyg.draw.line(screen, colours[pattern[x%(pathSize + wallSize)]], [x, 0], [x, size[1]]) # alternate between colours 1/2 according to pattern
+    pyg.display.flip()
     
+
+for y in range(size[1]):
+    if pattern[y%(pathSize + wallSize)] == 0:
+        pyg.draw.line(screen, colours[0], [0, y], [size[0], y]) # same
+        pyg.display.flip()
+    
+
+while True: # event handler
+    for evn in pyg.event.get(): # handles program exits
+        if evn.type == pyg.QUIT:
+            end()
+            sys.exit()
+
+    key = pyg.key.get_pressed()
+    if key[pyg.K_q] == True: # handles keyboard events
+        end()
+        sys.exit()
+
+    pyg.display.flip()
+
+
+
