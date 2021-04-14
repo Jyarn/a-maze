@@ -14,8 +14,8 @@ def end(): # cleanup
 
 
 # wall to path ratio
-wallSize = 1; 
-pathSize = 5;
+wallSize = 7; 
+pathSize = 7;
 
 pattern = [0]*wallSize + [1]*pathSize;
 
@@ -27,14 +27,13 @@ colours = [ [64, 0, 0], [0, 0, 0], [0, 0, 0] ]
 
 monRes = [1920, 1080] # monitor res
 border = [0, 0] # border size 0 = fullscreen
-size = [monRes[0]-border[0], monRes[1]-border[1]] # window size based on monRes and border size
+size = [ monRes[0]-(monRes[0]%(pathSize+wallSize)-2), monRes[1]-(monRes[1]%(pathSize+wallSize)-2)] # window size based on monRes and border size
 
 
 pyg.init()
 screen = pyg.display.set_mode(size)
 
 screen.fill(colours[2])
-
 
 for x in range(size[0]):
     if pattern[x%(pathSize + wallSize)] == 0:
