@@ -37,13 +37,16 @@ screen.fill(colours[2])
 
 
 for x in range(size[0]):
-    pyg.draw.line(screen, colours[pattern[x%(pathSize + wallSize)]], [x, 0], [x, size[1]]) # alternate between colours 1/2 according to pattern
-    pyg.display.flip()
+    if pattern[x%(pathSize + wallSize)] == 0:
+        pyg.draw.line(screen, colours[0], [x, 0], [x, size[1]]) # alternate between colours 1/2 according to pattern
+        time.sleep(0.001)
+        pyg.display.flip()
     
 
 for y in range(size[1]):
     if pattern[y%(pathSize + wallSize)] == 0:
         pyg.draw.line(screen, colours[0], [0, y], [size[0], y]) # same
+        time.sleep(0.001)
         pyg.display.flip()
     
 
@@ -59,6 +62,3 @@ while True: # event handler
         sys.exit()
 
     pyg.display.flip()
-
-
-
