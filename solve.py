@@ -1,4 +1,11 @@
+import sys
 import time
+import queue
+import copy
+from termcolor import colored
+import colorama
+
+colorama.init()
 
 
 class Node:
@@ -13,7 +20,7 @@ class Node:
         ----------
         type : string
             Placeholder for the item in the maze
-        id : int
+        id : tuple
             Unique ID to identify the node
         """
         self.type = type
@@ -22,8 +29,8 @@ class Node:
         self.connection = 0
 
 
-class SolveBFS:
-    def __init__(self, maze, start, end, open, wall):
+class MazeSolver:
+    def __init__(self, maze, start, end, open, wall, path="+", verbose=False):
         """Creates an instance of a maze.
 
         Parameters
@@ -35,66 +42,30 @@ class SolveBFS:
         end : string
             Exit node on the maze.
         open : string
-            Open path on the maze.
+            Open node on the maze.
         wall : string
             Obstacle on the maze.
+        path : string
+            To draw the path from start to end.
+        verbose : string
+            Display the number of searches and time.
         """
-        self.maze = maze
+        self.maze = copy.deepcopy(maze)
         self.start = start
         self.end = end
         self.open = open
         self.wall = wall
+        self.path = path
+        self.verbose = verbose
 
         self.last = 0
         self.time = 0  # time to solve maze
         self.searched = 0
 
-        self.add_outline()
-        self.create_id_nodes()
-        self.solve()
+        self.create_nodes()
 
-    def add_outline(self):
-        """Adds an outline at the start and end of maze to avoid KeyError issues"""
-
-        # add left and right walls in each row
-        maze_rows = len(self.maze)
-        for row in range(maze_rows):
-            self.maze[row].insert(0, ".")
-            self.maze[row].append(".")
-
-        # add top and bottom rows
-        border = ["."] * len(self.maze[0])
-        self.maze.insert(0, border)
-        self.maze.append(border)
-
-        # print()
-        # [print(i) for i in self.maze]
-        # print()
-
-    def remove_outline(self):
-        """Removes outline from maze for displaying to user"""
-
-        # remove left and right walls in each row
-        maze_rows = len(self.maze)
-        for row in range(maze_rows):
-            self.maze[row].pop(0)
-            self.maze[row].pop()
-
-        # remove top and bottom rows
-        self.maze.pop(0)
-        self.maze.pop()
-
-        # print()
-        # [print(i) for i in self.maze]
-        # print()
-
-    def create_id_nodes(self):
-        """Converts the 2d list into a dictionary containing IDs for locations"""
-
-        # dictionary of ids presenting node objects
+    def create_nodes(self):
         self.nodes = {}
-        # unique node ids
-        set_id = 0
 
         maze_rows = len(self.maze)
         maze_cols = len(self.maze[0])
@@ -102,46 +73,104 @@ class SolveBFS:
         # loop through each node and record its object id
         for row in range(maze_rows):
             for col in range(maze_cols):
-                set_id += 1
                 node_type = self.maze[row][col]
 
                 if node_type == self.start:
-                    self.start_id = set_id
+                    self.start_node = (col, row)
                 elif node_type == self.end:
-                    self.end_id = set_id
+                    self.end_node = (col, row)
 
-                node = Node(node_type, set_id)
-                self.nodes[set_id] = node
+                node = Node(node_type, (col, row))
+                self.nodes[(col, row)] = node
 
-    def solve(self):
-        """Finds the path from start to finish using the Breadth-first search Algo"""
+        # check if start/end points don't exist or couldn't be identified
+        if not hasattr(self, "start_node"):
+            print("No start point found")
+            sys.exit(1)
+        elif not hasattr(self, "end_node"):
+            print("No exit point found")
+            sys.exit(1)
 
-        queue = []
+    def show(self):
+        """Prints the maze and its solution to the console"""
+        connected = False
+        last = self.last
+        # check if a solution was found
+        if last == 0:
+            print("No solution found")
+        else:
+            print("Solution:")
+
+        while not connected:
+            try:
+                last = last.connection
+                if last.type != self.start:
+                    last.type = self.path
+            # when no exit node is found or last item reached
+            except AttributeError:
+                break
+
+        maze_rows = len(self.maze)
         maze_cols = len(self.maze[0])
+        for row in range(maze_rows):
+            for col in range(maze_cols):
+                node_type = self.nodes[(col, row)].type
+                if node_type == self.path:
+                    print(colored(node_type, "green").center(2), end="")
+                elif node_type == self.start or node_type == self.end:
+                    print(colored(node_type, "white").center(2), end="")
+                else:
+                    print(colored(node_type, "cyan").center(2), end="")
+            print()
+        print()
 
-        curr_node = self.nodes[self.start_id]
+
+class SolveBfsDfs(MazeSolver):
+    """Finds a path from start to end using two very similar algorithrms:
+    Breadth-first search and Depth-first search.
+
+    Parameters
+    ----------
+    MazeSolver : class
+        Creates class for the given maze
+    """
+
+    def __init__(self, maze, start, end, open, wall, path="+", verbose=False):
+        MazeSolver.__init__(self, maze, start, end, open, wall, path, verbose)
+
+    def solve(self, queue, algo):
+        """Finds the path from start to finish and records the connections between the nodes.
+
+        Parameters
+        ----------
+        queue : queue.Queue()/queue.LifoQueue()
+            Handles FIFO or LIFO, quicker than appending/popping from list
+        algo : string
+            Name of algorithm for printing the stats
+        """
+        self.queue = queue
+        curr_node = self.nodes[self.start_node]
         curr_node.visited = True
-        queue.append(curr_node)
+        self.queue.put(curr_node)
 
         self.time = time.time()
         found = False
         while not found:
             self.searched += 1
 
-            # get first node
-            try:
-                curr_node = queue[0]
-            # if exit node not within path then queue is empty since all open nodes were visited
-            except IndexError as e:
-                print("solve queue", e)
+            # get runner up node
+            if not self.queue.empty():
+                curr_node = self.queue.get()
+            else:
                 break
 
             # get id of left, right, up, and down nodes
+            # (x, y)
             adj_nodes = [
-                curr_node.id - 1,
-                curr_node.id + 1,
-                curr_node.id - maze_cols,
-                curr_node.id + maze_cols,
+                (curr_node.id[0] - 1, curr_node.id[1]),
+                (curr_node.id[0] + 1, curr_node.id[1]),
+                (curr_node.id[0], curr_node.id[1] - 1),
+                (curr_node.id[0], curr_node.id[1] + 1),
             ]
 
             # loop through neighbors and add to queue
@@ -153,43 +182,34 @@ class SolveBFS:
                             self.nodes[adj_node].connection = curr_node
                         # if node is open
                         if self.nodes[adj_node].type == self.open:
-                            queue.append(self.nodes[adj_node])
+                            self.queue.put(self.nodes[adj_node])
                         # exit node reached
                         elif self.nodes[adj_node].type == self.end:
                             found = True
                             self.last = self.nodes[adj_node]
 
                         self.nodes[adj_node].visited = True
-                except Exception as e:
-                    print("solve loop", e)
+                # outside boundary
+                except KeyError:
                     pass
-            queue.pop(0)
 
         # Done solving
         self.time = time.time() - self.time
-        print(">Solve stats")
-        print("Searched through", self.searched, "open nodes")
-        print("Time taken:", self.time)
+        if self.verbose:
+            print(f">{algo} Solve Stats")
+            print("Searched through", self.searched, "open nodes")
+            print("Time taken:", self.time)
 
-    def show(self):
-        """Prints the maze and its solution to the console"""
-        connected = False
-        last = self.last
-        while not connected:
-            try:
-                last = last.connection
-                if last.type != self.start:
-                    last.type = "+"
-            # when no exit node is found or last item reached
-            except AttributeError:
-                break
 
-        print("Solution:")
-        maze_rows = len(self.maze)
-        maze_cols = len(self.maze[0])
-        id = 0
-        for _ in range(1, maze_rows):
-            for _ in range(maze_cols):
-                id += 1
-                print(self.nodes[id].type.center(2), end="")
-            print()
+class SolveBfs(SolveBfsDfs):
+    def __init__(self, maze, start, end, open, wall, path="+", verbose=False):
+        """Finds path from start to end of maze using the Breadth-first search via FIFO Queues"""
+        SolveBfsDfs.__init__(self, maze, start, end, open, wall, path, verbose)
+        self.solve(queue.Queue(), "BFS")
+
+
+class SolveDfs(SolveBfsDfs):
+    def __init__(self, maze, start, end, open, wall, path="+", verbose=False):
+        """Finds path from start to end of maze using the Depth-first search via LIFO Queues"""
+        SolveBfsDfs.__init__(self, maze, start, end, open, wall, path, verbose)
+        self.solve(queue.LifoQueue(), "DFS")
