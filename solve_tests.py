@@ -80,7 +80,6 @@ maze6 = [
 
 maze7 = [list(i) for i in maze6]
 
-
 maze8 = [
     "+++++++++++++++++++++++++++++++++++++++++++++++++++",
     "+               +                                 +",
@@ -148,6 +147,15 @@ maze8 = [
     "+++++++++++++++++++++++++++++++++++++++++++++++++++",
 ]
 
+maze9 = [
+    "S        E",
+    "          ",
+    "          ",
+    "          ",
+    "          ",
+    "          ",
+]
+
 # Time tests between different maze sizes
 def bfs_maze_sizes(n):
     p = []
@@ -179,15 +187,12 @@ def bfs_maze_sizes(n):
 
     if n != 0:
         [print(f"bfs maze {i+1}", p[i] / n, "nodes/s") for i in range(len(p))]
-    print()
-
-
-bfs_maze_sizes(10)
+        print()
 
 
 def dfs_maze_sizes(n):
     p = []
-    [p.append(0) for _ in range(8)]
+    [p.append(0) for _ in range(9)]
     for _ in range(n):
         maze = solve.SolveDfs(maze1, "S", "E", " ", "#")
         p[0] += maze.searched / maze.time
@@ -213,15 +218,66 @@ def dfs_maze_sizes(n):
         maze = solve.SolveDfs(maze8, "s", "e", " ", "+", ".")
         p[7] += maze.searched / maze.time
 
+        maze = solve.SolveAStar(maze9, "S", "E", " ", "+", ".", verbose=True)
+        p[8] += maze.searched / maze.time
+
     if n != 0:
         [print(f"dfs maze {i+1}", p[i] / n, "nodes/s") for i in range(len(p))]
-    print()
+        print()
 
 
-dfs_maze_sizes(10)
+def astar_maze_sizes(n):
+    p = []
+    [p.append(0) for _ in range(9)]
+    for _ in range(n):
+        maze = solve.SolveAStar(maze1, "S", "E", " ", "#")
+        p[0] += maze.searched / maze.time
+
+        maze = solve.SolveAStar(maze2, "S", "E", " ", "#")
+        p[1] += maze.searched / maze.time
+
+        maze = solve.SolveAStar(maze3, "S", "E", " ", "#")
+        p[2] += maze.searched / maze.time
+
+        maze = solve.SolveAStar(maze4, "S", "E", " ", "#")
+        p[3] += maze.searched / maze.time
+
+        maze = solve.SolveAStar(maze5, "S", "E", " ", "#")
+        p[4] += maze.searched / maze.time
+
+        maze = solve.SolveAStar(maze6, "s", "e", " ", "+", ".")
+        p[5] += maze.searched / maze.time
+
+        maze = solve.SolveAStar(maze7, "s", "e", " ", "+", ".")
+        p[6] += maze.searched / maze.time
+
+        maze = solve.SolveAStar(maze8, "s", "e", " ", "+", ".")
+        p[7] += maze.searched / maze.time
+
+        maze = solve.SolveAStar(maze9, "S", "E", " ", "+", ".")
+        p[8] += maze.searched / maze.time
+
+    if n != 0:
+        [print(f"dfs maze {i+1}", p[i] / n, "nodes/s") for i in range(len(p))]
+        print()
+
+
+# time test cases
+bfs_maze_sizes(0)
+dfs_maze_sizes(0)
+astar_maze_sizes(0)
 
 # Drawing the solution to the console
 maze = solve.SolveBfs(maze7, "s", "e", " ", "+", ".", verbose=True)
 maze.show()
 maze = solve.SolveDfs(maze7, "s", "e", " ", "+", ".", verbose=True)
+maze.show()
+maze = solve.SolveAStar(maze7, "s", "e", " ", "+", ".", verbose=True)
+maze.show()
+
+maze = solve.SolveBfs(maze9, "S", "E", " ", "+", ".", verbose=True)
+maze.show()
+maze = solve.SolveDfs(maze9, "S", "E", " ", "+", ".", verbose=True)
+maze.show()
+maze = solve.SolveAStar(maze9, "S", "E", " ", "+", ".", verbose=True)
 maze.show()

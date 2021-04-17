@@ -9,9 +9,7 @@ colorama.init()
 
 
 class Node:
-    """
-    Represents a block; Start, Empty, Wall, or End
-    """
+    """Represents a block; Start, Empty, Wall, or End"""
 
     def __init__(self, type, id):
         """Creates instance of node/block/spot on the maze
@@ -65,6 +63,9 @@ class MazeSolver:
         self.create_nodes()
 
     def create_nodes(self):
+        """Creates a Node instance for every point on the maze with a unique id
+        for later searching"""
+
         self.nodes = {}
 
         maze_rows = len(self.maze)
@@ -93,6 +94,7 @@ class MazeSolver:
 
     def show(self):
         """Prints the maze and its solution to the console"""
+
         connected = False
         last = self.last
         # check if a solution was found
@@ -125,17 +127,16 @@ class MazeSolver:
         print()
 
 
-class SolveBfsDfs(MazeSolver):
-    """Finds a path from start to end using two very similar algorithrms:
-    Breadth-first search and Depth-first search.
-
-    Parameters
-    ----------
-    MazeSolver : class
-        Creates class for the given maze
-    """
-
+class SolveAlgo(MazeSolver):
     def __init__(self, maze, start, end, open, wall, path="+", verbose=False):
+        """Finds a path from start to end using three similar algorithms:
+        Breadth-first search, Depth-first search, and A*.
+
+        Parameters
+        ----------
+        MazeSolver : class
+            Creates class for the given maze
+        """
         MazeSolver.__init__(self, maze, start, end, open, wall, path, verbose)
 
     def solve(self, queue, algo):
@@ -151,16 +152,16 @@ class SolveBfsDfs(MazeSolver):
         self.queue = queue
         curr_node = self.nodes[self.start_node]
         curr_node.visited = True
-        self.queue.put(curr_node)
+        self.queue.put((self.priority(curr_node), id(curr_node), curr_node))
 
         self.time = time.time()
         found = False
         while not found:
             self.searched += 1
 
-            # get runner up node
+            # get runner up node [priority, node]
             if not self.queue.empty():
-                curr_node = self.queue.get()
+                curr_node = self.queue.get()[2]
             else:
                 break
 
@@ -182,7 +183,9 @@ class SolveBfsDfs(MazeSolver):
                             self.nodes[adj_node].connection = curr_node
                         # if node is open
                         if self.nodes[adj_node].type == self.open:
-                            self.queue.put(self.nodes[adj_node])
+                            priority = self.priority(self.nodes[adj_node])
+                            node = self.nodes[adj_node]
+                            self.queue.put((priority, id(node), node))
                         # exit node reached
                         elif self.nodes[adj_node].type == self.end:
                             found = True
@@ -201,15 +204,36 @@ class SolveBfsDfs(MazeSolver):
             print("Time taken:", self.time)
 
 
-class SolveBfs(SolveBfsDfs):
+class SolveBfs(SolveAlgo):
     def __init__(self, maze, start, end, open, wall, path="+", verbose=False):
         """Finds path from start to end of maze using the Breadth-first search via FIFO Queues"""
-        SolveBfsDfs.__init__(self, maze, start, end, open, wall, path, verbose)
+        SolveAlgo.__init__(self, maze, start, end, open, wall, path, verbose)
         self.solve(queue.Queue(), "BFS")
 
+    def priority(self, node):
+        return 0
 
-class SolveDfs(SolveBfsDfs):
+
+class SolveDfs(SolveAlgo):
     def __init__(self, maze, start, end, open, wall, path="+", verbose=False):
         """Finds path from start to end of maze using the Depth-first search via LIFO Queues"""
-        SolveBfsDfs.__init__(self, maze, start, end, open, wall, path, verbose)
+        SolveAlgo.__init__(self, maze, start, end, open, wall, path, verbose)
         self.solve(queue.LifoQueue(), "DFS")
+
+    def priority(self, node):
+        return 0
+
+
+class SolveAStar(SolveAlgo):
+    def __init__(self, maze, start, end, open, wall, path="+", verbose=False):
+        """Finds path from start to end of maze using A*'s travel cost
+        (the same so redundant here) and distance to exit"""
+
+        SolveAlgo.__init__(self, maze, start, end, open, wall, path, verbose)
+        self.solve(queue.PriorityQueue(), "A*")
+
+    def priority(self, node):
+        # find distance between current node and exit node (col, row)
+        y_distance = abs(self.end_node[0] - node.id[0])
+        x_distance = abs(self.end_node[1] - node.id[1])
+        return y_distance + x_distance
