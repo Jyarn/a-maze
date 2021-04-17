@@ -9,3 +9,5 @@ size = [ int(winRes[0] / elmSz) * elmSz+wallSize, int(winRes[1] / elmSz) * elmSz
 # 1 = path colour
 colours = [ [128, 0, 0], [0, 0, 0] ]
 screen = None
+
+lock = False
