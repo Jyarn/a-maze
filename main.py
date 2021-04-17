@@ -3,6 +3,7 @@ from event import *
 import config
 import _thread
 import time
+import sys
 
 class eventProps:
     usrIn = "nothing lol"
@@ -27,9 +28,7 @@ while True: # multi thread
         pyg.display.set_caption("Window Resolution" + str(config.size[0]) + " x " + str(config.size[1]))
         
         print("starting maze generation...")
-        mazeCreate()
-
-        print("done maze generation")
+        _thread.start_new_thread(mazeCreate, ())
         reset()
 
     elif evntRet.usrIn == "s":
@@ -37,6 +36,7 @@ while True: # multi thread
         reset()
 
     elif evntRet.usrIn == "q":
+        print("exiting")
         sys.exit()
 
     elif evntRet.usrIn == "cS":

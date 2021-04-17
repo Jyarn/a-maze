@@ -1,5 +1,5 @@
 wallSize = 1
-pathSize = 25
+pathSize = 1
 elmSz = wallSize + pathSize
 
 winRes = [720, 720]

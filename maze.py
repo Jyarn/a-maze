@@ -2,6 +2,7 @@ import pygame as pyg
 import random
 import config
 import _thread
+import time
 
 class mzElm(): # maze element
     def __init__(self):
@@ -104,4 +105,7 @@ def mazeCreate():
             wallFill(mazeMap[x][y], config.colours[1], [x, y])
             pathFill([x, y], config.colours[1])
         pyg.display.flip()
+    
+    print("maze generation complete")
+    return mazeMap
 
