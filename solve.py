@@ -46,7 +46,7 @@ class MazeSolver:
         path : string
             To draw the path from start to end.
         verbose : string
-            Display the number of searches and time.
+            Print out the number of searches and time lapsed.
         """
         self.maze = copy.deepcopy(maze)
         self.start = start
@@ -56,9 +56,8 @@ class MazeSolver:
         self.path = path
         self.verbose = verbose
 
-        self.last = 0
         self.time = 0  # time to solve maze
-        self.searched = 0
+        self.searched = 0  # open nodes expanded
 
         self.create_nodes()
 
@@ -96,7 +95,7 @@ class MazeSolver:
         """Prints the maze and its solution to the console"""
 
         connected = False
-        last = self.last
+        last = self.nodes[self.end_node]
         # check if a solution was found
         if last == 0:
             print("No solution found")
@@ -140,7 +139,8 @@ class SolveAlgo(MazeSolver):
         MazeSolver.__init__(self, maze, start, end, open, wall, path, verbose)
 
     def solve(self, queue, algo):
-        """Finds the path from start to finish and records the connections between the nodes.
+        """Applies the general algorithm to find the path from start to finish,
+        recording the connections between the nodes that lead to the path.
 
         Parameters
         ----------
@@ -159,7 +159,7 @@ class SolveAlgo(MazeSolver):
         while not found:
             self.searched += 1
 
-            # get runner up node [priority, node]
+            # get runner up node [priority, unique id, node]
             if not self.queue.empty():
                 curr_node = self.queue.get()[2]
             else:
@@ -183,13 +183,13 @@ class SolveAlgo(MazeSolver):
                             self.nodes[adj_node].connection = curr_node
                         # if node is open
                         if self.nodes[adj_node].type == self.open:
-                            priority = self.priority(self.nodes[adj_node])
                             node = self.nodes[adj_node]
+                            priority = self.priority(node)
+                            # avoid TypeError when comparing same priority by adding id()
                             self.queue.put((priority, id(node), node))
                         # exit node reached
                         elif self.nodes[adj_node].type == self.end:
                             found = True
-                            self.last = self.nodes[adj_node]
 
                         self.nodes[adj_node].visited = True
                 # outside boundary
@@ -234,6 +234,6 @@ class SolveAStar(SolveAlgo):
 
     def priority(self, node):
         # find distance between current node and exit node (col, row)
-        y_distance = abs(self.end_node[0] - node.id[0])
-        x_distance = abs(self.end_node[1] - node.id[1])
-        return y_distance + x_distance
+        x_distance = abs(self.end_node[0] - node.id[0])
+        y_distance = abs(self.end_node[1] - node.id[1])
+        return x_distance + y_distance
